@@ -4,21 +4,29 @@ import commonjs from "@rollup/plugin-commonjs";
 import typescript from "rollup-plugin-typescript2";
 import postcss from "rollup-plugin-postcss";
 import serve from 'rollup-plugin-serve';
+import {terser} from 'rollup-plugin-terser';
+import sourcemaps from 'rollup-plugin-sourcemaps';
+import rollupReplace from '@rollup/plugin-replace';
 
 const packageJson = require("./package.json");
-
+const serverDir = "public";
 export default {
   input: "src/index.tsx",
   output: [
     {
-      file: packageJson.main,
+      file: `${serverDir}/${packageJson.main}`,
       format: "cjs",
-      sourcemap: true
+      sourcemap: process.env.NODE_ENV === 'production'
     },
     {
-      file: packageJson.module,
+      file: `${serverDir}/${packageJson.main}.esm.js`,
       format: "esm",
-      sourcemap: true
+      sourcemap: process.env.NODE_ENV === 'production'
+    },
+    {
+      file: `${serverDir}/${packageJson.main}.umd.js`,
+      format: "umd",
+      sourcemap: process.env.NODE_ENV === 'production'
     }
   ],
   plugins: [
@@ -27,7 +35,10 @@ export default {
     commonjs(),
     typescript({ useTsconfigDeclarationDir: true }),
     postcss(),
-    serve('dist')
+    serve(serverDir),
+    sourcemaps(),
+    rollupReplace(),
+    (process.env.NODE_ENV === 'production' && terser())
   ],
   watch: {
     chokidar: {
